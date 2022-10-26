@@ -190,6 +190,19 @@ class User {
     return user;
   }
 
+  /**Apply for a job with a username and jobID
+   * 
+   * Returns { jobId }
+   */
+
+  static async apply(username, jobID) {
+    const result = await db.query(`INSERT INTO applications (username, job_id)
+                                      VALUES ($1, $2)
+                                      RETURNING job_id`, [username, jobID]);
+    if( result.rowCount === 0 ) throw new BadRequestError;                                  
+    return { jobID: result.rows[0].job_id };
+  };
+
   /** Delete given user from database; returns undefined. */
 
   static async remove(username) {

@@ -15,7 +15,14 @@ const {
   u2Token,
 } = require("./_testCommon");
 
-beforeAll(commonBeforeAll);
+let jobID1;
+
+beforeAll( async ()=>{
+  await commonBeforeAll();
+  const res = await db.query(`SELECT id FROM jobs WHERE title='j1'`);
+  console.log(res)
+  jobID1 = res.rows[0].id;
+});
 beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
@@ -388,5 +395,36 @@ describe("DELETE /users/:username", function () {
         .delete(`/users/nope`)
         .set("authorization", `Bearer ${u1Token}`);
     expect(resp.statusCode).toEqual(404);
+  });
+});
+
+/*****************************************POST /:username/jobs/:id */
+
+describe("POST /:username/jobs/:id", ()=>{
+  test("works for admins", async ()=>{
+    const resp = await request(app)
+                          .post(`/users/u2/jobs/${jobID1}`)
+                          .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.body).toEqual({ applied: jobID1 });
+  });
+
+  test("works for the correct non-admin user", async ()=>{
+    const resp = await request(app)
+                          .post(`/users/u2/jobs/${jobID1}`)
+                          .set("authorization", `Bearer ${u2Token}`);
+    expect(resp.body).toEqual({ applied: jobID1 });
+  });
+
+  test("unauth for the incorrect non-admin user", async ()=>{
+    const resp = await request(app)
+                          .post(`/users/u1/jobs/${jobID1}`)
+                          .set("authorization", `Bearer ${u2Token}`);
+    expect(resp.statusCode).toEqual(401);
+  });
+
+  test("unauth for anon", async ()=>{
+    const resp = await request(app)
+                          .post(`/users/u1/jobs/${jobID1}`);
+    expect(resp.statusCode).toEqual(401);
   });
 });

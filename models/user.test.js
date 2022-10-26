@@ -13,8 +13,15 @@ const {
   commonAfterEach,
   commonAfterAll,
 } = require("./_testCommon");
+let jobID1;
 
-beforeAll(commonBeforeAll);
+beforeAll( async ()=>{
+  await commonBeforeAll();
+  const res = await db.query(`SELECT id FROM jobs WHERE title='j1'`);
+  console.log(res)
+  jobID1 = res.rows[0].id;
+});
+
 beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
@@ -226,5 +233,13 @@ describe("remove", function () {
     } catch (err) {
       expect(err instanceof NotFoundError).toBeTruthy();
     }
+  });
+});
+
+/************************************apply */
+describe("apply", ()=>{
+  test("works", async ()=>{
+    const res = await User.apply('u1', jobID1)
+    expect(res).toEqual({jobID: jobID1});
   });
 });
